@@ -11,13 +11,26 @@ This project is a RESTful API for managing burger orders, built with **Spring Bo
    cd ./burger-order-api
    ```
 
-2. **Run Tests:**
+2. **Database Configuration:**
+
+   Open the file `src/main/resources/application-dev.properties` and replace the placeholders with your PostgreSQL credentials
+
+   ```bash
+   # Example: spring.datasource.url=jdbc:postgresql://localhost:5432/burger_order_db_dev
+   spring.datasource.url=DB_URL
+   spring.datasource.username=DB_USERNAME
+   spring.datasource.password=DB_PASSWORD
+   ```
+
+   > Note: The application is configured to use the dev profile by default
+
+3. **Run Tests:**
 
    ```bash
    mvn test
    ```
 
-3. **Run the Application:**
+4. **Run the Application:**
 
    ```bash
    mvn spring-boot:run
