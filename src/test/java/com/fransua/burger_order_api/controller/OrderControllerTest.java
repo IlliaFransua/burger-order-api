@@ -9,7 +9,6 @@ import com.fransua.burger_order_api.dto.request.OrderRequest;
 import com.fransua.burger_order_api.dto.response.BurgerResponse;
 import com.fransua.burger_order_api.dto.response.OrderResponse;
 import com.fransua.burger_order_api.dto.response.UploadStatsResponse;
-import com.fransua.burger_order_api.entity.Burger;
 import com.fransua.burger_order_api.factory.BurgerTestFactory;
 import com.fransua.burger_order_api.repository.BurgerRepository;
 import com.fransua.burger_order_api.repository.OrderRepository;
@@ -50,7 +49,7 @@ public class OrderControllerTest {
   private final TestRestTemplate testRestTemplate;
   private final OrderRepository orderRepository;
   private final BurgerTestFactory burgerTestFactory;
-  private BurgerRepository burgerRepository;
+  private final BurgerRepository burgerRepository;
 
   @Autowired
   public OrderControllerTest(TestRestTemplate testRestTemplate,
@@ -110,7 +109,7 @@ public class OrderControllerTest {
     assertThat(response.getCreatedAt()).isNotNull();
     assertThat(response.getBurgers()).isNotNull();
 
-    List<Long> linkedBurgerIds = response.getBurgers().stream().map(Burger::getId).toList();
+    List<Long> linkedBurgerIds = response.getBurgers().stream().map(BurgerResponse::getId).toList();
 
     assertThat(linkedBurgerIds.stream().sorted().toList()).isEqualTo(
         burgerIds.stream().sorted().toList());
@@ -357,7 +356,8 @@ public class OrderControllerTest {
 
     assertThat(updatedOrder.getBurgers()).isNotNull();
 
-    List<Long> updatedBurgerIds = updatedOrder.getBurgers().stream().map(Burger::getId).toList();
+    List<Long> updatedBurgerIds = updatedOrder.getBurgers().stream().map(BurgerResponse::getId)
+        .toList();
 
     assertThat(updatedBurgerIds).isEqualTo(burgerIdsToUpdate);
   }

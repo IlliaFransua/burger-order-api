@@ -7,7 +7,8 @@ import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring", uses = {
+    BurgerMapper.class}, unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface OrderMapper {
 
   Order toOrder(OrderRequest orderRequest);

@@ -29,8 +29,7 @@ public class BurgerControllerTest {
   private final TestRestTemplate testRestTemplate;
   private final BurgerRepository burgerRepository;
   private final BurgerTestFactory burgerTestFactory;
-  @Autowired
-  private OrderRepository orderRepository;
+  private final OrderRepository orderRepository;
 
   @Autowired
   public BurgerControllerTest(TestRestTemplate testRestTemplate,
