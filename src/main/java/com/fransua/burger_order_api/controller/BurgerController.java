@@ -25,8 +25,7 @@ public class BurgerController {
   public BurgerController(BurgerService burgerService) {
     this.burgerService = burgerService;
   }
-
-  // TODO: return StreamingResponseBody instead of List<BurgerResponse>
+  
   @GetMapping
   public ResponseEntity<List<BurgerResponse>> findAllBurgers() {
     List<BurgerResponse> responses = burgerService.findAllBurgers();

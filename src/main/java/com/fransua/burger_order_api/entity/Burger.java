@@ -10,7 +10,6 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import lombok.Data;
 
-// 2
 @Data
 @Entity
 public class Burger {
