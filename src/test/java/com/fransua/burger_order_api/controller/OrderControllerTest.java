@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -61,7 +61,7 @@ public class OrderControllerTest {
     this.burgerTestFactory = new BurgerTestFactory(testRestTemplate);
   }
 
-  @BeforeEach
+  @AfterEach
   public void deleteAllCreatedOrdersAndBurgers() {
     orderRepository.deleteAll();
     burgerRepository.deleteAll();
