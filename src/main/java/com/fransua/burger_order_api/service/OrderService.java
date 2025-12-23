@@ -1,5 +1,23 @@
 package com.fransua.burger_order_api.service;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.time.Instant;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.SequenceWriter;
@@ -17,21 +35,8 @@ import com.fransua.burger_order_api.exception.TechnicalFailureException;
 import com.fransua.burger_order_api.mapper.OrderMapper;
 import com.fransua.burger_order_api.repository.BurgerRepository;
 import com.fransua.burger_order_api.repository.OrderRepository;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
-import java.time.Instant;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -80,6 +85,7 @@ public class OrderService {
     return orderMapper.toResponse(foundOrder);
   }
 
+  @Transactional
   public OrderResponse updateOrder(Long id, OrderRequest orderRequest) {
     List<Burger> foundBurgers = findAndValidateBurgers(orderRequest.getBurgerIds());
 
@@ -97,9 +103,38 @@ public class OrderService {
   }
 
   public Page<OrderResponse> getPaginatedOrders(Pageable pageable) {
+    boolean isSortingByTotalPrice = pageable.getSort().stream()
+        .anyMatch(order -> "totalPrice".equals(order.getProperty()));
+
+    if (isSortingByTotalPrice) {
+      return getPaginatedOrdersByTotalPrice(pageable);
+    }
+
     Page<Order> orderPage = orderRepository.findAll(pageable);
     List<OrderResponse> responseContent = orderMapper.toResponseList(orderPage.getContent());
     return new PageImpl<>(responseContent, orderPage.getPageable(), orderPage.getTotalElements());
+  }
+
+  private Page<OrderResponse> getPaginatedOrdersByTotalPrice(Pageable pageable) {
+    boolean isDesc = pageable.getSort().stream()
+        .map(Sort.Order::isDescending).findFirst().orElse(false);
+
+    Pageable cleanPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+
+    Page<Long> idsPage = orderRepository.findIdsSotedByTotalBurgersPrice(isDesc, cleanPageable);
+
+    if (idsPage.isEmpty()) {
+      return Page.empty(pageable);
+    }
+
+    List<Order> fullOrders = orderRepository.findAllByIdIn(idsPage.getContent(), Sort.unsorted());
+
+    List<OrderResponse> sortedFullOrders = idsPage.getContent().stream()
+        .map(id -> fullOrders.stream().filter(order -> order.getId().equals(id)).findFirst().orElseThrow())
+        .map(orderMapper::toResponse)
+        .toList();
+
+    return new PageImpl<>(sortedFullOrders, pageable, idsPage.getTotalElements());
   }
 
   @Transactional(readOnly = true)

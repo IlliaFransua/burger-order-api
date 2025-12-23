@@ -1,6 +1,5 @@
 package com.fransua.burger_order_api.config;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.context.annotation.Bean;
