@@ -1,8 +1,7 @@
-package com.fransua.burger_order_api.mapper;
+package com.fransua.burger_order_api.burger;
 
-import com.fransua.burger_order_api.dto.request.BurgerRequest;
-import com.fransua.burger_order_api.dto.response.BurgerResponse;
-import com.fransua.burger_order_api.entity.Burger;
+import com.fransua.burger_order_api.burger.dto.request.BurgerRequest;
+import com.fransua.burger_order_api.burger.dto.response.BurgerResponse;
 import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;

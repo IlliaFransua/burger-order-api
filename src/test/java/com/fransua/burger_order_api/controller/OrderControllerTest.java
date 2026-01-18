@@ -4,14 +4,14 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fransua.burger_order_api.dto.request.FilterCriteriaRequest;
-import com.fransua.burger_order_api.dto.request.OrderRequest;
-import com.fransua.burger_order_api.dto.response.BurgerResponse;
-import com.fransua.burger_order_api.dto.response.OrderResponse;
-import com.fransua.burger_order_api.dto.response.UploadStatsResponse;
+import com.fransua.burger_order_api.burger.BurgerRepository;
+import com.fransua.burger_order_api.burger.dto.response.BurgerResponse;
 import com.fransua.burger_order_api.factory.BurgerTestFactory;
-import com.fransua.burger_order_api.repository.BurgerRepository;
-import com.fransua.burger_order_api.repository.OrderRepository;
+import com.fransua.burger_order_api.order.OrderRepository;
+import com.fransua.burger_order_api.order.dto.request.FilterCriteriaRequest;
+import com.fransua.burger_order_api.order.dto.request.OrderRequest;
+import com.fransua.burger_order_api.order.dto.response.OrderResponse;
+import com.fransua.burger_order_api.order.dto.response.UploadStatsResponse;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -46,17 +47,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 public class OrderControllerTest {
 
-  private final TestRestTemplate testRestTemplate;
-  private final OrderRepository orderRepository;
-  private final BurgerTestFactory burgerTestFactory;
-  private final BurgerRepository burgerRepository;
+  @Autowired private TestRestTemplate testRestTemplate;
+  @Autowired private OrderRepository orderRepository;
+  @Autowired private BurgerRepository burgerRepository;
+  private BurgerTestFactory burgerTestFactory;
 
-  @Autowired
-  public OrderControllerTest(TestRestTemplate testRestTemplate,
-      BurgerRepository burgerRepository, OrderRepository orderRepository) {
-    this.testRestTemplate = testRestTemplate;
-    this.burgerRepository = burgerRepository;
-    this.orderRepository = orderRepository;
+  @BeforeEach
+  public void setUp() {
     this.burgerTestFactory = new BurgerTestFactory(testRestTemplate);
   }
 
@@ -71,20 +68,20 @@ public class OrderControllerTest {
 
     String name1 = "TestBurger_" + UUID.randomUUID().toString();
     BigDecimal price1 = new BigDecimal("15.4");
-    ResponseEntity<BurgerResponse> response1 = burgerTestFactory.createTestBurgerAndValidate(name1,
-        price1);
+    ResponseEntity<BurgerResponse> response1 =
+        burgerTestFactory.createTestBurgerAndValidate(name1, price1);
     ids.add(response1.getBody().getId());
 
     String name2 = "TestBurger_" + UUID.randomUUID().toString();
     BigDecimal price2 = new BigDecimal("3.2");
-    ResponseEntity<BurgerResponse> response2 = burgerTestFactory.createTestBurgerAndValidate(name2,
-        price2);
+    ResponseEntity<BurgerResponse> response2 =
+        burgerTestFactory.createTestBurgerAndValidate(name2, price2);
     ids.add(response2.getBody().getId());
 
     String name3 = "TestBurger_" + UUID.randomUUID().toString();
     BigDecimal price3 = new BigDecimal("7.6");
-    ResponseEntity<BurgerResponse> response3 = burgerTestFactory.createTestBurgerAndValidate(name3,
-        price3);
+    ResponseEntity<BurgerResponse> response3 =
+        burgerTestFactory.createTestBurgerAndValidate(name3, price3);
     ids.add(response3.getBody().getId());
 
     return ids;
@@ -94,11 +91,9 @@ public class OrderControllerTest {
     OrderRequest orderRequest = new OrderRequest();
     orderRequest.setBurgerIds(burgerIds);
 
-    ResponseEntity<OrderResponse> responseEntity = testRestTemplate.exchange(
-        "/api/order",
-        HttpMethod.POST,
-        new HttpEntity<>(orderRequest),
-        OrderResponse.class);
+    ResponseEntity<OrderResponse> responseEntity =
+        testRestTemplate.exchange(
+            "/api/order", HttpMethod.POST, new HttpEntity<>(orderRequest), OrderResponse.class);
 
     assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     assertThat(responseEntity.getBody()).isNotNull();
@@ -111,11 +106,13 @@ public class OrderControllerTest {
 
     List<Long> linkedBurgerIds = response.getBurgers().stream().map(BurgerResponse::getId).toList();
 
-    assertThat(linkedBurgerIds.stream().sorted().toList()).isEqualTo(
-        burgerIds.stream().sorted().toList());
+    assertThat(linkedBurgerIds.stream().sorted().toList())
+        .isEqualTo(burgerIds.stream().sorted().toList());
 
-    orderRepository.findById(response.getId()).orElseThrow(
-        () -> new AssertionError("Order with ID '" + response.getId() + "' is not found."));
+    orderRepository
+        .findById(response.getId())
+        .orElseThrow(
+            () -> new AssertionError("Order with ID '" + response.getId() + "' is not found."));
 
     return response;
   }
@@ -125,10 +122,7 @@ public class OrderControllerTest {
     orderRequest.setBurgerIds(burgerIds);
 
     return testRestTemplate.exchange(
-        "/api/order",
-        HttpMethod.POST,
-        new HttpEntity<>(orderRequest),
-        String.class);
+        "/api/order", HttpMethod.POST, new HttpEntity<>(orderRequest), String.class);
   }
 
   private OrderResponse createTestOrder() {
@@ -289,9 +283,8 @@ public class OrderControllerTest {
     // it will also check if the order exists actually in repository
     OrderResponse createdOrder = createOrderAndValidate(testBurgers);
 
-    ResponseEntity<OrderResponse> response = testRestTemplate.getForEntity(
-        "/api/order/" + createdOrder.getId(),
-        OrderResponse.class);
+    ResponseEntity<OrderResponse> response =
+        testRestTemplate.getForEntity("/api/order/" + createdOrder.getId(), OrderResponse.class);
 
     assertThat(response.getStatusCode()).isNotNull();
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -313,9 +306,8 @@ public class OrderControllerTest {
   @Test
   @WithMockUser
   public void findOrder_notExistingOrderId() {
-    ResponseEntity<String> badResponse = testRestTemplate.getForEntity(
-        "/api/order/8888",
-        String.class);
+    ResponseEntity<String> badResponse =
+        testRestTemplate.getForEntity("/api/order/8888", String.class);
 
     assertThat(badResponse.getStatusCode()).isNotNull();
     assertThat(badResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -336,11 +328,12 @@ public class OrderControllerTest {
     OrderRequest request = new OrderRequest();
     request.setBurgerIds(burgerIdsToUpdate);
 
-    ResponseEntity<OrderResponse> response = testRestTemplate.exchange(
-        "/api/order/" + createdOrder.getId(),
-        HttpMethod.PUT,
-        new HttpEntity<>(request),
-        OrderResponse.class);
+    ResponseEntity<OrderResponse> response =
+        testRestTemplate.exchange(
+            "/api/order/" + createdOrder.getId(),
+            HttpMethod.PUT,
+            new HttpEntity<>(request),
+            OrderResponse.class);
 
     assertThat(response.getStatusCode()).isNotNull();
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -356,8 +349,8 @@ public class OrderControllerTest {
 
     assertThat(updatedOrder.getBurgers()).isNotNull();
 
-    List<Long> updatedBurgerIds = updatedOrder.getBurgers().stream().map(BurgerResponse::getId)
-        .toList();
+    List<Long> updatedBurgerIds =
+        updatedOrder.getBurgers().stream().map(BurgerResponse::getId).toList();
 
     assertThat(updatedBurgerIds).isEqualTo(burgerIdsToUpdate);
   }
@@ -372,11 +365,12 @@ public class OrderControllerTest {
     OrderRequest request = new OrderRequest();
     request.setBurgerIds(burgerIdsToUpdate);
 
-    ResponseEntity<String> badResponse = testRestTemplate.exchange(
-        "/api/order/" + createdOrder.getId(),
-        HttpMethod.PUT,
-        new HttpEntity<>(request),
-        String.class);
+    ResponseEntity<String> badResponse =
+        testRestTemplate.exchange(
+            "/api/order/" + createdOrder.getId(),
+            HttpMethod.PUT,
+            new HttpEntity<>(request),
+            String.class);
 
     assertThat(badResponse.getStatusCode()).isNotNull();
     assertThat(badResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -393,11 +387,9 @@ public class OrderControllerTest {
     OrderRequest request = new OrderRequest();
     request.setBurgerIds(burgerIdsToUpdate);
 
-    ResponseEntity<String> badResponse = testRestTemplate.exchange(
-        "/api/order/" + 8888L,
-        HttpMethod.PUT,
-        new HttpEntity<>(request),
-        String.class);
+    ResponseEntity<String> badResponse =
+        testRestTemplate.exchange(
+            "/api/order/" + 8888L, HttpMethod.PUT, new HttpEntity<>(request), String.class);
 
     assertThat(badResponse.getStatusCode()).isNotNull();
     assertThat(badResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -414,11 +406,9 @@ public class OrderControllerTest {
     OrderRequest request = new OrderRequest();
     request.setBurgerIds(burgerIdsToUpdate);
 
-    ResponseEntity<String> badResponse = testRestTemplate.exchange(
-        "/api/order/" + 8888L,
-        HttpMethod.PUT,
-        new HttpEntity<>(request),
-        String.class);
+    ResponseEntity<String> badResponse =
+        testRestTemplate.exchange(
+            "/api/order/" + 8888L, HttpMethod.PUT, new HttpEntity<>(request), String.class);
 
     assertThat(badResponse.getStatusCode()).isNotNull();
     assertThat(badResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -434,11 +424,9 @@ public class OrderControllerTest {
   public void deleteOrder_existingOrderId() {
     OrderResponse createdOrder = createTestOrder();
 
-    ResponseEntity<String> response = testRestTemplate.exchange(
-        "/api/order/" + createdOrder.getId(),
-        HttpMethod.DELETE,
-        null,
-        String.class);
+    ResponseEntity<String> response =
+        testRestTemplate.exchange(
+            "/api/order/" + createdOrder.getId(), HttpMethod.DELETE, null, String.class);
 
     assertThat(response.getStatusCode()).isNotNull();
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
@@ -449,11 +437,8 @@ public class OrderControllerTest {
   @Test
   @WithMockUser
   public void deleteOrder_notExistingOrderId() {
-    ResponseEntity<String> badResponse = testRestTemplate.exchange(
-        "/api/order/8888",
-        HttpMethod.DELETE,
-        null,
-        String.class);
+    ResponseEntity<String> badResponse =
+        testRestTemplate.exchange("/api/order/8888", HttpMethod.DELETE, null, String.class);
 
     assertThat(badResponse.getStatusCode()).isNotNull();
     assertThat(badResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -471,12 +456,12 @@ public class OrderControllerTest {
       createTestOrder();
     }
 
-    ResponseEntity<Map<String, Object>> response = testRestTemplate.exchange(
-        "/api/order/_list",
-        HttpMethod.POST,
-        null,
-        new ParameterizedTypeReference<Map<String, Object>>() {
-        });
+    ResponseEntity<Map<String, Object>> response =
+        testRestTemplate.exchange(
+            "/api/order/_list",
+            HttpMethod.POST,
+            null,
+            new ParameterizedTypeReference<Map<String, Object>>() {});
 
     assertThat(response.getStatusCode()).isNotNull();
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -498,12 +483,12 @@ public class OrderControllerTest {
       createTestOrder();
     }
 
-    ResponseEntity<Map<String, Object>> response = testRestTemplate.exchange(
-        "/api/order/_list?page=1&size=5&sort=createdAt,desc",
-        HttpMethod.POST,
-        null,
-        new ParameterizedTypeReference<Map<String, Object>>() {
-        });
+    ResponseEntity<Map<String, Object>> response =
+        testRestTemplate.exchange(
+            "/api/order/_list?page=1&size=5&sort=createdAt,desc",
+            HttpMethod.POST,
+            null,
+            new ParameterizedTypeReference<Map<String, Object>>() {});
 
     assertThat(response.getStatusCode()).isNotNull();
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -530,11 +515,9 @@ public class OrderControllerTest {
     filter.setOrderCreatedAtFrom(Instant.now().minus(1, ChronoUnit.DAYS));
     filter.setOrderCreatedAtTo(Instant.now().plus(1, ChronoUnit.DAYS));
 
-    ResponseEntity<byte[]> response = testRestTemplate.exchange(
-        "/api/order/_report",
-        HttpMethod.POST,
-        new HttpEntity<>(filter),
-        byte[].class);
+    ResponseEntity<byte[]> response =
+        testRestTemplate.exchange(
+            "/api/order/_report", HttpMethod.POST, new HttpEntity<>(filter), byte[].class);
 
     assertThat(response.getStatusCode()).isNotNull();
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -542,14 +525,14 @@ public class OrderControllerTest {
     assertThat(response.getHeaders()).isNotNull();
 
     assertThat(response.getHeaders().getContentType()).isNotNull();
-    assertThat(response.getHeaders().getContentType()).isEqualTo(
-        MediaType.parseMediaType("text/csv"));
+    assertThat(response.getHeaders().getContentType())
+        .isEqualTo(MediaType.parseMediaType("text/csv"));
 
     assertThat(response.getHeaders().getContentDisposition()).isNotNull();
 
     assertThat(response.getHeaders().getContentDisposition().getFilename()).isNotNull();
-    assertThat(response.getHeaders().getContentDisposition().getFilename()).isEqualTo(
-        "orders_report.csv");
+    assertThat(response.getHeaders().getContentDisposition().getFilename())
+        .isEqualTo("orders_report.csv");
 
     assertThat(response.getBody()).isNotNull();
     String csvContent = new String(response.getBody(), StandardCharsets.UTF_8);
@@ -573,11 +556,9 @@ public class OrderControllerTest {
     FilterCriteriaRequest filter = new FilterCriteriaRequest();
     filter.setOrderCreatedAtFrom(Instant.now().minus(1, ChronoUnit.DAYS));
 
-    ResponseEntity<byte[]> response = testRestTemplate.exchange(
-        "/api/order/_report",
-        HttpMethod.POST,
-        new HttpEntity<>(filter),
-        byte[].class);
+    ResponseEntity<byte[]> response =
+        testRestTemplate.exchange(
+            "/api/order/_report", HttpMethod.POST, new HttpEntity<>(filter), byte[].class);
 
     assertThat(response.getStatusCode()).isNotNull();
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -585,14 +566,14 @@ public class OrderControllerTest {
     assertThat(response.getHeaders()).isNotNull();
 
     assertThat(response.getHeaders().getContentType()).isNotNull();
-    assertThat(response.getHeaders().getContentType()).isEqualTo(
-        MediaType.parseMediaType("text/csv"));
+    assertThat(response.getHeaders().getContentType())
+        .isEqualTo(MediaType.parseMediaType("text/csv"));
 
     assertThat(response.getHeaders().getContentDisposition()).isNotNull();
 
     assertThat(response.getHeaders().getContentDisposition().getFilename()).isNotNull();
-    assertThat(response.getHeaders().getContentDisposition().getFilename()).isEqualTo(
-        "orders_report.csv");
+    assertThat(response.getHeaders().getContentDisposition().getFilename())
+        .isEqualTo("orders_report.csv");
 
     assertThat(response.getBody()).isNotNull();
     String csvContent = new String(response.getBody(), StandardCharsets.UTF_8);
@@ -616,11 +597,9 @@ public class OrderControllerTest {
     FilterCriteriaRequest filter = new FilterCriteriaRequest();
     filter.setOrderCreatedAtTo(Instant.now().plus(1, ChronoUnit.DAYS));
 
-    ResponseEntity<byte[]> response = testRestTemplate.exchange(
-        "/api/order/_report",
-        HttpMethod.POST,
-        new HttpEntity<>(filter),
-        byte[].class);
+    ResponseEntity<byte[]> response =
+        testRestTemplate.exchange(
+            "/api/order/_report", HttpMethod.POST, new HttpEntity<>(filter), byte[].class);
 
     assertThat(response.getStatusCode()).isNotNull();
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -628,14 +607,14 @@ public class OrderControllerTest {
     assertThat(response.getHeaders()).isNotNull();
 
     assertThat(response.getHeaders().getContentType()).isNotNull();
-    assertThat(response.getHeaders().getContentType()).isEqualTo(
-        MediaType.parseMediaType("text/csv"));
+    assertThat(response.getHeaders().getContentType())
+        .isEqualTo(MediaType.parseMediaType("text/csv"));
 
     assertThat(response.getHeaders().getContentDisposition()).isNotNull();
 
     assertThat(response.getHeaders().getContentDisposition().getFilename()).isNotNull();
-    assertThat(response.getHeaders().getContentDisposition().getFilename()).isEqualTo(
-        "orders_report.csv");
+    assertThat(response.getHeaders().getContentDisposition().getFilename())
+        .isEqualTo("orders_report.csv");
 
     assertThat(response.getBody()).isNotNull();
     String csvContent = new String(response.getBody(), StandardCharsets.UTF_8);
@@ -659,11 +638,9 @@ public class OrderControllerTest {
     FilterCriteriaRequest filter = new FilterCriteriaRequest();
     filter.setBurgerName(orderResponse2.getBurgers().get(1).getName());
 
-    ResponseEntity<byte[]> response = testRestTemplate.exchange(
-        "/api/order/_report",
-        HttpMethod.POST,
-        new HttpEntity<>(filter),
-        byte[].class);
+    ResponseEntity<byte[]> response =
+        testRestTemplate.exchange(
+            "/api/order/_report", HttpMethod.POST, new HttpEntity<>(filter), byte[].class);
 
     assertThat(response.getStatusCode()).isNotNull();
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -671,14 +648,14 @@ public class OrderControllerTest {
     assertThat(response.getHeaders()).isNotNull();
 
     assertThat(response.getHeaders().getContentType()).isNotNull();
-    assertThat(response.getHeaders().getContentType()).isEqualTo(
-        MediaType.parseMediaType("text/csv"));
+    assertThat(response.getHeaders().getContentType())
+        .isEqualTo(MediaType.parseMediaType("text/csv"));
 
     assertThat(response.getHeaders().getContentDisposition()).isNotNull();
 
     assertThat(response.getHeaders().getContentDisposition().getFilename()).isNotNull();
-    assertThat(response.getHeaders().getContentDisposition().getFilename()).isEqualTo(
-        "orders_report.csv");
+    assertThat(response.getHeaders().getContentDisposition().getFilename())
+        .isEqualTo("orders_report.csv");
 
     assertThat(response.getBody()).isNotNull();
     String csvContent = new String(response.getBody(), StandardCharsets.UTF_8);
@@ -701,11 +678,9 @@ public class OrderControllerTest {
     FilterCriteriaRequest filter = new FilterCriteriaRequest();
     filter.setOrderCreatedAtFrom(Instant.now().plus(1, ChronoUnit.DAYS));
 
-    ResponseEntity<byte[]> response = testRestTemplate.exchange(
-        "/api/order/_report",
-        HttpMethod.POST,
-        new HttpEntity<>(filter),
-        byte[].class);
+    ResponseEntity<byte[]> response =
+        testRestTemplate.exchange(
+            "/api/order/_report", HttpMethod.POST, new HttpEntity<>(filter), byte[].class);
 
     assertThat(response.getStatusCode()).isNotNull();
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -713,14 +688,14 @@ public class OrderControllerTest {
     assertThat(response.getHeaders()).isNotNull();
 
     assertThat(response.getHeaders().getContentType()).isNotNull();
-    assertThat(response.getHeaders().getContentType()).isEqualTo(
-        MediaType.parseMediaType("text/csv"));
+    assertThat(response.getHeaders().getContentType())
+        .isEqualTo(MediaType.parseMediaType("text/csv"));
 
     assertThat(response.getHeaders().getContentDisposition()).isNotNull();
 
     assertThat(response.getHeaders().getContentDisposition().getFilename()).isNotNull();
-    assertThat(response.getHeaders().getContentDisposition().getFilename()).isEqualTo(
-        "orders_report.csv");
+    assertThat(response.getHeaders().getContentDisposition().getFilename())
+        .isEqualTo("orders_report.csv");
 
     assertThat(response.getBody()).isNotNull();
     String csvContent = new String(response.getBody(), StandardCharsets.UTF_8);
@@ -744,11 +719,9 @@ public class OrderControllerTest {
     FilterCriteriaRequest filter = new FilterCriteriaRequest();
     filter.setOrderCreatedAtTo(Instant.now().minus(1, ChronoUnit.DAYS));
 
-    ResponseEntity<byte[]> response = testRestTemplate.exchange(
-        "/api/order/_report",
-        HttpMethod.POST,
-        new HttpEntity<>(filter),
-        byte[].class);
+    ResponseEntity<byte[]> response =
+        testRestTemplate.exchange(
+            "/api/order/_report", HttpMethod.POST, new HttpEntity<>(filter), byte[].class);
 
     assertThat(response.getStatusCode()).isNotNull();
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -756,14 +729,14 @@ public class OrderControllerTest {
     assertThat(response.getHeaders()).isNotNull();
 
     assertThat(response.getHeaders().getContentType()).isNotNull();
-    assertThat(response.getHeaders().getContentType()).isEqualTo(
-        MediaType.parseMediaType("text/csv"));
+    assertThat(response.getHeaders().getContentType())
+        .isEqualTo(MediaType.parseMediaType("text/csv"));
 
     assertThat(response.getHeaders().getContentDisposition()).isNotNull();
 
     assertThat(response.getHeaders().getContentDisposition().getFilename()).isNotNull();
-    assertThat(response.getHeaders().getContentDisposition().getFilename()).isEqualTo(
-        "orders_report.csv");
+    assertThat(response.getHeaders().getContentDisposition().getFilename())
+        .isEqualTo("orders_report.csv");
 
     assertThat(response.getBody()).isNotNull();
     String csvContent = new String(response.getBody(), StandardCharsets.UTF_8);
@@ -787,11 +760,9 @@ public class OrderControllerTest {
     FilterCriteriaRequest filter = new FilterCriteriaRequest();
     filter.setBurgerName("pokemon");
 
-    ResponseEntity<byte[]> response = testRestTemplate.exchange(
-        "/api/order/_report",
-        HttpMethod.POST,
-        new HttpEntity<>(filter),
-        byte[].class);
+    ResponseEntity<byte[]> response =
+        testRestTemplate.exchange(
+            "/api/order/_report", HttpMethod.POST, new HttpEntity<>(filter), byte[].class);
 
     assertThat(response.getStatusCode()).isNotNull();
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -799,14 +770,14 @@ public class OrderControllerTest {
     assertThat(response.getHeaders()).isNotNull();
 
     assertThat(response.getHeaders().getContentType()).isNotNull();
-    assertThat(response.getHeaders().getContentType()).isEqualTo(
-        MediaType.parseMediaType("text/csv"));
+    assertThat(response.getHeaders().getContentType())
+        .isEqualTo(MediaType.parseMediaType("text/csv"));
 
     assertThat(response.getHeaders().getContentDisposition()).isNotNull();
 
     assertThat(response.getHeaders().getContentDisposition().getFilename()).isNotNull();
-    assertThat(response.getHeaders().getContentDisposition().getFilename()).isEqualTo(
-        "orders_report.csv");
+    assertThat(response.getHeaders().getContentDisposition().getFilename())
+        .isEqualTo("orders_report.csv");
 
     assertThat(response.getBody()).isNotNull();
     String csvContent = new String(response.getBody(), StandardCharsets.UTF_8);
@@ -827,11 +798,9 @@ public class OrderControllerTest {
     OrderResponse orderResponse2 = createTestOrder();
     OrderResponse orderResponse3 = createTestOrder();
 
-    ResponseEntity<byte[]> response = testRestTemplate.exchange(
-        "/api/order/_report",
-        HttpMethod.POST,
-        new HttpEntity<>(null),
-        byte[].class);
+    ResponseEntity<byte[]> response =
+        testRestTemplate.exchange(
+            "/api/order/_report", HttpMethod.POST, new HttpEntity<>(null), byte[].class);
 
     assertThat(response.getStatusCode()).isNotNull();
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
@@ -851,11 +820,12 @@ public class OrderControllerTest {
       headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
       headers.setContentLength(ordersToUploadFile.length());
 
-      ResponseEntity<UploadStatsResponse> response = testRestTemplate.exchange(
-          "/api/order/upload",
-          HttpMethod.POST,
-          new HttpEntity<InputStreamResource>(resource, headers),
-          UploadStatsResponse.class);
+      ResponseEntity<UploadStatsResponse> response =
+          testRestTemplate.exchange(
+              "/api/order/upload",
+              HttpMethod.POST,
+              new HttpEntity<InputStreamResource>(resource, headers),
+              UploadStatsResponse.class);
 
       assertThat(response.getStatusCode()).isNotNull();
       assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -887,11 +857,12 @@ public class OrderControllerTest {
       headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
       headers.setContentLength(ordersToUploadFile.length());
 
-      ResponseEntity<UploadStatsResponse> response = testRestTemplate.exchange(
-          "/api/order/upload",
-          HttpMethod.POST,
-          new HttpEntity<InputStreamResource>(resource, headers),
-          UploadStatsResponse.class);
+      ResponseEntity<UploadStatsResponse> response =
+          testRestTemplate.exchange(
+              "/api/order/upload",
+              HttpMethod.POST,
+              new HttpEntity<InputStreamResource>(resource, headers),
+              UploadStatsResponse.class);
 
       assertThat(response.getStatusCode()).isNotNull();
       assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -914,7 +885,8 @@ public class OrderControllerTest {
   @Test
   @WithMockUser
   public void uploadOrders_invalidJson_mixedValidAndInvalidBurgerIds() throws IOException {
-    File ordersToUploadFile = createTestJsonFileWithOrdersToUpload_withMixedValidAndInvalidBurgerIds();
+    File ordersToUploadFile =
+        createTestJsonFileWithOrdersToUpload_withMixedValidAndInvalidBurgerIds();
 
     try (InputStream fileInputStream = new FileInputStream(ordersToUploadFile)) {
       InputStreamResource resource = new InputStreamResource(fileInputStream);
@@ -923,11 +895,12 @@ public class OrderControllerTest {
       headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
       headers.setContentLength(ordersToUploadFile.length());
 
-      ResponseEntity<UploadStatsResponse> response = testRestTemplate.exchange(
-          "/api/order/upload",
-          HttpMethod.POST,
-          new HttpEntity<InputStreamResource>(resource, headers),
-          UploadStatsResponse.class);
+      ResponseEntity<UploadStatsResponse> response =
+          testRestTemplate.exchange(
+              "/api/order/upload",
+              HttpMethod.POST,
+              new HttpEntity<InputStreamResource>(resource, headers),
+              UploadStatsResponse.class);
 
       assertThat(response.getStatusCode()).isNotNull();
       assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -965,11 +938,12 @@ public class OrderControllerTest {
       headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
       headers.setContentLength(ordersToUploadFile.length());
 
-      ResponseEntity<UploadStatsResponse> response = testRestTemplate.exchange(
-          "/api/order/upload",
-          HttpMethod.POST,
-          new HttpEntity<InputStreamResource>(resource, headers),
-          UploadStatsResponse.class);
+      ResponseEntity<UploadStatsResponse> response =
+          testRestTemplate.exchange(
+              "/api/order/upload",
+              HttpMethod.POST,
+              new HttpEntity<InputStreamResource>(resource, headers),
+              UploadStatsResponse.class);
 
       assertThat(response.getStatusCode()).isNotNull();
       assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -995,11 +969,12 @@ public class OrderControllerTest {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 
-    ResponseEntity<UploadStatsResponse> response = testRestTemplate.exchange(
-        "/api/order/upload",
-        HttpMethod.POST,
-        new HttpEntity<InputStreamResource>(null, headers),
-        UploadStatsResponse.class);
+    ResponseEntity<UploadStatsResponse> response =
+        testRestTemplate.exchange(
+            "/api/order/upload",
+            HttpMethod.POST,
+            new HttpEntity<InputStreamResource>(null, headers),
+            UploadStatsResponse.class);
 
     assertThat(response.getStatusCode()).isNotNull();
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);

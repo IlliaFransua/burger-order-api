@@ -1,10 +1,10 @@
-package com.fransua.burger_order_api.controller;
+package com.fransua.burger_order_api.burger;
 
-import com.fransua.burger_order_api.dto.request.BurgerRequest;
-import com.fransua.burger_order_api.dto.response.BurgerResponse;
-import com.fransua.burger_order_api.service.BurgerService;
+import com.fransua.burger_order_api.burger.dto.request.BurgerRequest;
+import com.fransua.burger_order_api.burger.dto.response.BurgerResponse;
 import jakarta.validation.Valid;
 import java.util.List;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,14 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/burger")
+@AllArgsConstructor
 public class BurgerController {
 
   private final BurgerService burgerService;
 
-  public BurgerController(BurgerService burgerService) {
-    this.burgerService = burgerService;
-  }
-  
   @GetMapping
   public ResponseEntity<List<BurgerResponse>> findAllBurgers() {
     List<BurgerResponse> responses = burgerService.findAllBurgers();
@@ -40,8 +37,8 @@ public class BurgerController {
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<BurgerResponse> updateBurger(@PathVariable Long id,
-      @Valid @RequestBody BurgerRequest burgerRequest) {
+  public ResponseEntity<BurgerResponse> updateBurger(
+      @PathVariable Long id, @Valid @RequestBody BurgerRequest burgerRequest) {
     BurgerResponse response = burgerService.updateBurger(id, burgerRequest);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }

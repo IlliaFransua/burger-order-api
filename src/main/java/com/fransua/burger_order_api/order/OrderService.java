@@ -1,5 +1,19 @@
-package com.fransua.burger_order_api.service;
+package com.fransua.burger_order_api.order;
 
+import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.SequenceWriter;
+import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import com.fransua.burger_order_api.burger.Burger;
+import com.fransua.burger_order_api.burger.BurgerRepository;
+import com.fransua.burger_order_api.exception.NotFoundResourceException;
+import com.fransua.burger_order_api.exception.TechnicalFailureException;
+import com.fransua.burger_order_api.order.dto.request.FilterCriteriaRequest;
+import com.fransua.burger_order_api.order.dto.request.OrderRequest;
+import com.fransua.burger_order_api.order.dto.response.OrderResponse;
+import com.fransua.burger_order_api.order.dto.response.OrderResponseCsv;
+import com.fransua.burger_order_api.order.dto.response.UploadStatsResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -8,7 +22,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -17,26 +31,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.SequenceWriter;
-import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import com.fransua.burger_order_api.dto.request.FilterCriteriaRequest;
-import com.fransua.burger_order_api.dto.request.OrderRequest;
-import com.fransua.burger_order_api.dto.response.OrderResponse;
-import com.fransua.burger_order_api.dto.response.OrderResponseCsv;
-import com.fransua.burger_order_api.dto.response.UploadStatsResponse;
-import com.fransua.burger_order_api.entity.Burger;
-import com.fransua.burger_order_api.entity.Order;
-import com.fransua.burger_order_api.exception.NotFoundResourceException;
-import com.fransua.burger_order_api.exception.TechnicalFailureException;
-import com.fransua.burger_order_api.mapper.OrderMapper;
-import com.fransua.burger_order_api.repository.BurgerRepository;
-import com.fransua.burger_order_api.repository.OrderRepository;
-
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -47,8 +41,10 @@ public class OrderService {
   private final BurgerRepository burgerRepository;
   private final OrderMapper orderMapper;
 
-  public OrderService(@Qualifier("orderReader") ObjectReader orderReader,
-      OrderRepository orderRepository, BurgerRepository burgerRepository,
+  public OrderService(
+      @Qualifier("orderReader") ObjectReader orderReader,
+      OrderRepository orderRepository,
+      BurgerRepository burgerRepository,
       OrderMapper orderMapper) {
     this.orderReader = orderReader;
     this.orderRepository = orderRepository;
@@ -80,8 +76,11 @@ public class OrderService {
   }
 
   public OrderResponse findOrder(Long id) {
-    Order foundOrder = orderRepository.findById(id).orElseThrow(
-        () -> new NotFoundResourceException("Order with ID '" + id + "' is not found."));
+    Order foundOrder =
+        orderRepository
+            .findById(id)
+            .orElseThrow(
+                () -> new NotFoundResourceException("Order with ID '" + id + "' is not found."));
     return orderMapper.toResponse(foundOrder);
   }
 
@@ -89,22 +88,28 @@ public class OrderService {
   public OrderResponse updateOrder(Long id, OrderRequest orderRequest) {
     List<Burger> foundBurgers = findAndValidateBurgers(orderRequest.getBurgerIds());
 
-    Order foundOrder = orderRepository.findById(id).orElseThrow(
-        () -> new NotFoundResourceException("Order with ID '" + id + "' is not found."));
+    Order foundOrder =
+        orderRepository
+            .findById(id)
+            .orElseThrow(
+                () -> new NotFoundResourceException("Order with ID '" + id + "' is not found."));
     foundOrder.setBurgers(foundBurgers);
 
     return orderMapper.toResponse(foundOrder);
   }
 
   public void deleteOrder(Long id) {
-    Order orderToDelete = orderRepository.findById(id).orElseThrow(
-        () -> new NotFoundResourceException("Order with ID '" + id + "' is not found."));
+    Order orderToDelete =
+        orderRepository
+            .findById(id)
+            .orElseThrow(
+                () -> new NotFoundResourceException("Order with ID '" + id + "' is not found."));
     orderRepository.delete(orderToDelete);
   }
 
   public Page<OrderResponse> getPaginatedOrders(Pageable pageable) {
-    boolean isSortingByTotalPrice = pageable.getSort().stream()
-        .anyMatch(order -> "totalPrice".equals(order.getProperty()));
+    boolean isSortingByTotalPrice =
+        pageable.getSort().stream().anyMatch(order -> "totalPrice".equals(order.getProperty()));
 
     if (isSortingByTotalPrice) {
       return getPaginatedOrdersByTotalPrice(pageable);
@@ -116,8 +121,8 @@ public class OrderService {
   }
 
   private Page<OrderResponse> getPaginatedOrdersByTotalPrice(Pageable pageable) {
-    boolean isDesc = pageable.getSort().stream()
-        .map(Sort.Order::isDescending).findFirst().orElse(false);
+    boolean isDesc =
+        pageable.getSort().stream().map(Sort.Order::isDescending).findFirst().orElse(false);
 
     Pageable cleanPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
 
@@ -129,10 +134,16 @@ public class OrderService {
 
     List<Order> fullOrders = orderRepository.findAllByIdIn(idsPage.getContent(), Sort.unsorted());
 
-    List<OrderResponse> sortedFullOrders = idsPage.getContent().stream()
-        .map(id -> fullOrders.stream().filter(order -> order.getId().equals(id)).findFirst().orElseThrow())
-        .map(orderMapper::toResponse)
-        .toList();
+    List<OrderResponse> sortedFullOrders =
+        idsPage.getContent().stream()
+            .map(
+                id ->
+                    fullOrders.stream()
+                        .filter(order -> order.getId().equals(id))
+                        .findFirst()
+                        .orElseThrow())
+            .map(orderMapper::toResponse)
+            .toList();
 
     return new PageImpl<>(sortedFullOrders, pageable, idsPage.getTotalElements());
   }
@@ -145,29 +156,32 @@ public class OrderService {
 
     CsvSchema schema = mapper.schemaFor(OrderResponseCsv.class).withHeader();
 
-    try (Stream<Order> orderStream = orderRepository.findOrdersByFilter(
-        filter.getOrderCreatedAtFrom(),
-        filter.getOrderCreatedAtTo(),
-        filter.getBurgerName());
+    try (Stream<Order> orderStream =
+            orderRepository.findOrdersByFilter(
+                filter.getOrderCreatedAtFrom(),
+                filter.getOrderCreatedAtTo(),
+                filter.getBurgerName());
         SequenceWriter writer = mapper.writer(schema).writeValues(outputStream)) {
 
-      orderStream.forEach(order -> {
-        try {
-          String burgers = order.getBurgers().stream()
-              .map(Burger::toString)
-              .collect(Collectors.joining("; "));
+      orderStream.forEach(
+          order -> {
+            try {
+              String burgers =
+                  order.getBurgers().stream()
+                      .map(Burger::toString)
+                      .collect(Collectors.joining("; "));
 
-          OrderResponseCsv csvResponse = new OrderResponseCsv();
+              OrderResponseCsv csvResponse = new OrderResponseCsv();
 
-          csvResponse.setId(order.getId());
-          csvResponse.setCreatedAt(order.getCreatedAt());
-          csvResponse.setBurgers(burgers);
+              csvResponse.setId(order.getId());
+              csvResponse.setCreatedAt(order.getCreatedAt());
+              csvResponse.setBurgers(burgers);
 
-          writer.write(csvResponse);
-        } catch (IOException e) {
-          throw new UncheckedIOException(e);
-        }
-      });
+              writer.write(csvResponse);
+            } catch (IOException e) {
+              throw new UncheckedIOException(e);
+            }
+          });
 
       outputStream.flush();
 

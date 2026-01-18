@@ -1,14 +1,14 @@
-package com.fransua.burger_order_api.controller;
+package com.fransua.burger_order_api.order;
 
-import com.fransua.burger_order_api.dto.request.FilterCriteriaRequest;
-import com.fransua.burger_order_api.dto.request.OrderRequest;
-import com.fransua.burger_order_api.dto.response.OrderResponse;
-import com.fransua.burger_order_api.dto.response.UploadStatsResponse;
 import com.fransua.burger_order_api.exception.TechnicalFailureException;
-import com.fransua.burger_order_api.service.OrderService;
+import com.fransua.burger_order_api.order.dto.request.FilterCriteriaRequest;
+import com.fransua.burger_order_api.order.dto.request.OrderRequest;
+import com.fransua.burger_order_api.order.dto.response.OrderResponse;
+import com.fransua.burger_order_api.order.dto.response.UploadStatsResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.io.IOException;
+import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -29,13 +29,10 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 @RestController
 @RequestMapping("/api/order")
+@AllArgsConstructor
 public class OrderController {
 
   private final OrderService orderService;
-
-  public OrderController(OrderService orderService) {
-    this.orderService = orderService;
-  }
 
   @PostMapping
   public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody OrderRequest orderRequest) {
@@ -50,8 +47,8 @@ public class OrderController {
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<OrderResponse> updateOrder(@PathVariable Long id,
-      @Valid @RequestBody OrderRequest orderRequest) {
+  public ResponseEntity<OrderResponse> updateOrder(
+      @PathVariable Long id, @Valid @RequestBody OrderRequest orderRequest) {
     OrderResponse response = orderService.updateOrder(id, orderRequest);
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
@@ -78,9 +75,10 @@ public class OrderController {
     headers.setContentDisposition(
         ContentDisposition.parse("attachment; filename=\"orders_report.csv\""));
 
-    StreamingResponseBody streamingResponseBody = outputStream -> {
-      orderService.generateReport(filter, outputStream);
-    };
+    StreamingResponseBody streamingResponseBody =
+        outputStream -> {
+          orderService.generateReport(filter, outputStream);
+        };
 
     return new ResponseEntity<>(streamingResponseBody, headers, HttpStatus.OK);
   }
@@ -94,5 +92,4 @@ public class OrderController {
       throw new TechnicalFailureException("Failed to get input stream from request.", e);
     }
   }
-
 }

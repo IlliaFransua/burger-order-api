@@ -1,4 +1,4 @@
-package com.fransua.burger_order_api.dto.request;
+package com.fransua.burger_order_api.order.dto.request;
 
 import jakarta.validation.constraints.NotEmpty;
 import java.util.List;

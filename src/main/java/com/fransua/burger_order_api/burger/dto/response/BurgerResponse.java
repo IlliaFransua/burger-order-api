@@ -1,4 +1,4 @@
-package com.fransua.burger_order_api.dto.response;
+package com.fransua.burger_order_api.burger.dto.response;
 
 import java.math.BigDecimal;
 import lombok.Data;

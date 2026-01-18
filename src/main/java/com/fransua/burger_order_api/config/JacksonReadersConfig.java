@@ -2,7 +2,7 @@ package com.fransua.burger_order_api.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import com.fransua.burger_order_api.dto.request.OrderRequest;
+import com.fransua.burger_order_api.order.dto.request.OrderRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,7 +17,7 @@ public class JacksonReadersConfig {
   }
 
   @Bean
-  public ObjectReader orderReader() {
+  ObjectReader orderReader() {
     return mapper.readerFor(OrderRequest.class);
   }
 }

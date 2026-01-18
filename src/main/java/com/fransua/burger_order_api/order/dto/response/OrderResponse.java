@@ -1,5 +1,6 @@
-package com.fransua.burger_order_api.dto.response;
+package com.fransua.burger_order_api.order.dto.response;
 
+import com.fransua.burger_order_api.burger.dto.response.BurgerResponse;
 import java.time.Instant;
 import java.util.List;
 import lombok.Data;

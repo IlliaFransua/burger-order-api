@@ -1,27 +1,21 @@
-package com.fransua.burger_order_api.service;
+package com.fransua.burger_order_api.burger;
 
-import com.fransua.burger_order_api.dto.request.BurgerRequest;
-import com.fransua.burger_order_api.dto.response.BurgerResponse;
-import com.fransua.burger_order_api.entity.Burger;
+import com.fransua.burger_order_api.burger.dto.request.BurgerRequest;
+import com.fransua.burger_order_api.burger.dto.response.BurgerResponse;
 import com.fransua.burger_order_api.exception.DuplicateResourceException;
 import com.fransua.burger_order_api.exception.NotFoundResourceException;
-import com.fransua.burger_order_api.mapper.BurgerMapper;
-import com.fransua.burger_order_api.repository.BurgerRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.stream.StreamSupport;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@AllArgsConstructor
 public class BurgerService {
 
   private final BurgerRepository burgerRepository;
   private final BurgerMapper burgerMapper;
-
-  public BurgerService(BurgerRepository burgerRepository, BurgerMapper burgerMapper) {
-    this.burgerRepository = burgerRepository;
-    this.burgerMapper = burgerMapper;
-  }
 
   public BurgerResponse createBurger(BurgerRequest burgerRequest) {
     if (burgerRepository.existsByName(burgerRequest.getName())) {
@@ -41,9 +35,11 @@ public class BurgerService {
 
   @Transactional
   public BurgerResponse updateBurger(Long id, BurgerRequest burgerRequest) {
-    Burger foundBurger = burgerRepository.findById(id)
-        .orElseThrow(
-            () -> new NotFoundResourceException("Burger with ID " + id + " is not found."));
+    Burger foundBurger =
+        burgerRepository
+            .findById(id)
+            .orElseThrow(
+                () -> new NotFoundResourceException("Burger with ID " + id + " is not found."));
 
     if (!foundBurger.getName().equals(burgerRequest.getName())) {
       if (burgerRepository.existsByName(burgerRequest.getName())) {
@@ -60,8 +56,11 @@ public class BurgerService {
 
   @Transactional
   public void deleteBurger(Long id) {
-    Burger burgerToDelete = burgerRepository.findById(id).orElseThrow(
-        () -> new NotFoundResourceException("Burger with ID '" + id + "' is not found."));
+    Burger burgerToDelete =
+        burgerRepository
+            .findById(id)
+            .orElseThrow(
+                () -> new NotFoundResourceException("Burger with ID '" + id + "' is not found."));
     burgerRepository.delete(burgerToDelete);
   }
 }

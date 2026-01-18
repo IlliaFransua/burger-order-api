@@ -1,4 +1,4 @@
-package com.fransua.burger_order_api.controller;
+package com.fransua.burger_order_api.config;
 
 import com.fransua.burger_order_api.exception.DuplicateResourceException;
 import com.fransua.burger_order_api.exception.NotFoundResourceException;
@@ -21,9 +21,10 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(NotFoundResourceException.class)
-  public ResponseEntity<String> handleNotFoundResource(NotFoundResourceException exception,
-      HttpServletRequest request) {
-    log.warn("Resource not found attempt on URI: {}. Details: {}.",
+  public ResponseEntity<String> handleNotFoundResource(
+      NotFoundResourceException exception, HttpServletRequest request) {
+    log.warn(
+        "Resource not found attempt on URI: {}. Details: {}.",
         request.getRequestURI(),
         exception.getMessage());
     return new ResponseEntity<>(exception.getMessage(), HttpStatus.NOT_FOUND);

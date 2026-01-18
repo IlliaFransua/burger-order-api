@@ -1,6 +1,5 @@
-package com.fransua.burger_order_api.repository;
+package com.fransua.burger_order_api.burger;
 
-import com.fransua.burger_order_api.entity.Burger;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

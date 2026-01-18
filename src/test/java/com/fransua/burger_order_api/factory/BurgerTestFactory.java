@@ -2,8 +2,8 @@ package com.fransua.burger_order_api.factory;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-import com.fransua.burger_order_api.dto.request.BurgerRequest;
-import com.fransua.burger_order_api.dto.response.BurgerResponse;
+import com.fransua.burger_order_api.burger.dto.request.BurgerRequest;
+import com.fransua.burger_order_api.burger.dto.response.BurgerResponse;
 import java.math.BigDecimal;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
@@ -17,8 +17,7 @@ public class BurgerTestFactory {
     this.testRestTemplate = testRestTemplate;
   }
 
-  public ResponseEntity<BurgerResponse> createTestBurgerAndValidate(String name,
-      BigDecimal price) {
+  public ResponseEntity<BurgerResponse> createTestBurgerAndValidate(String name, BigDecimal price) {
     ResponseEntity<BurgerResponse> response = createTestBurger(name, price);
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -28,27 +27,21 @@ public class BurgerTestFactory {
     return response;
   }
 
-  public ResponseEntity<BurgerResponse> createTestBurger(String name,
-      BigDecimal price) {
+  public ResponseEntity<BurgerResponse> createTestBurger(String name, BigDecimal price) {
     BurgerRequest burgerToCreate = new BurgerRequest();
-    
+
     burgerToCreate.setName(name);
     burgerToCreate.setUnitPrice(price);
 
-    return testRestTemplate.postForEntity("/api/burger",
-        burgerToCreate,
-        BurgerResponse.class);
+    return testRestTemplate.postForEntity("/api/burger", burgerToCreate, BurgerResponse.class);
   }
 
-  public ResponseEntity<String> createTestBurgerExpectingError(String name,
-      BigDecimal price) {
+  public ResponseEntity<String> createTestBurgerExpectingError(String name, BigDecimal price) {
     BurgerRequest burgerToCreate = new BurgerRequest();
 
     burgerToCreate.setName(name);
     burgerToCreate.setUnitPrice(price);
 
-    return testRestTemplate.postForEntity("/api/burger",
-        burgerToCreate,
-        String.class);
+    return testRestTemplate.postForEntity("/api/burger", burgerToCreate, String.class);
   }
 }
