@@ -1,0 +1,22 @@
+meta {
+  name: create order
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:8080/api/order
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "burgerIds": [2920, 2922, 2924, 2926, 2928, 2930]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
