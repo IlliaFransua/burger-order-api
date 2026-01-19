@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -44,18 +45,21 @@ public class OrderService {
   private final BurgerRepository burgerRepository;
   private final OrderMapper orderMapper;
   private final RabbitTemplate rabbitTemplate;
+  private final String orderReportEmailRecipient;
 
   public OrderService(
       @Qualifier("orderReader") ObjectReader orderReader,
       OrderRepository orderRepository,
       BurgerRepository burgerRepository,
       OrderMapper orderMapper,
-      RabbitTemplate rabbitTemplate) {
+      RabbitTemplate rabbitTemplate,
+      @Value("${app.mail.report-to}") String orderReportEmailRecipient) {
     this.orderReader = orderReader;
     this.orderRepository = orderRepository;
     this.burgerRepository = burgerRepository;
     this.orderMapper = orderMapper;
     this.rabbitTemplate = rabbitTemplate;
+    this.orderReportEmailRecipient = orderReportEmailRecipient;
   }
 
   public OrderResponse createOrder(OrderRequest orderRequest) {
@@ -69,7 +73,7 @@ public class OrderService {
 
     OrderCreatedEmailNotificationRequest request =
         new OrderCreatedEmailNotificationRequest(
-            "example@example.example",
+            this.orderReportEmailRecipient,
             "New Order #" + savedOrder.getId(),
             "Order details: " + savedOrder.toString());
 

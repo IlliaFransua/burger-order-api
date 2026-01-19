@@ -22,6 +22,7 @@ docker run -d \
   docker.elastic.co/elasticsearch/elasticsearch:8.12.0
 
 # Reset password for Kibana system user (wait ~20s for Elasticsearch to start first)
+# If the terminal asks you to enter the password manually, type: password
 docker exec -it elasticsearch_dev bin/elasticsearch-reset-password -u kibana_system --batch --force -is "password"
 
 # Run Kibana
@@ -69,7 +70,7 @@ git clone https://github.com/IlliaFransua/burger-order-api
 cd ./burger-order-api
 ```
 
-2. **Database Configuration:**
+2. **PostgreSQL Configuration:**
 
 Open the file `src/main/resources/application-dev.properties` and replace the placeholders with your PostgreSQL credentials
 
@@ -81,7 +82,17 @@ spring.datasource.password=password
 
 > Note: The application is configured to use the dev profile by default
 
-3. **Run Tests:**
+3. **Elasticsearch and JavaMailSender Configuration**
+
+Create a copy of the `.env.example` file in the root directory and rename it to `.env`. Then, fill in the missing fields.
+
+> Note: If you have run the Docker infrastructure from the example, you don't need to fill in the `ELASTIC_USERNAME` and `ELASTIC_PASSWORD` fields. Just fill in `EMAIL_USERNAME` and `EMAIL_PASSWORD`. Otherwise, fill in all fields with your credentials.
+
+4. **Run Tests:**
+
+> ⚠️ **Warning!** The application sends email notifications for every new order created. If you run the tests, your inbox may be flooded with messages sent to `example@example.com` or any other address you specified in your `.env` file.
+
+> ⚠️ **Warning!** Running tests will clear the database, including the default burger menu created by migrations. To restore this data for manual testing (for example, using Bruno), you should recreate the Docker container to re-trigger the migration seeding. Ideally, use a separate Docker environment for automated testing to keep your development data intact. Alternatively, you can manually drop the database tables (including the migration metadata tables), if you know how to do that! :)
 
 ```bash
 mvn test
@@ -90,10 +101,12 @@ mvn test
 4. **Run the Application:**
 
 ```bash
-mvn spring-boot:run
+mvn spring-boot:run -DskipTests
 ```
 
-After starting, you can interact with the API (for example, using Postman or cURL) through endpoints.
+After starting, you can interact with the API (for example, using Bruno, Postman or cURL) through endpoints.
+
+> Note: At the root of the project, there is a directory called `bruno/`. If you have configured `.env` file correctly, you can execute its request to create an order to see notifications by email about the creation of a new order.
 
 ---
 
