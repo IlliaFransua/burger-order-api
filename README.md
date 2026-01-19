@@ -2,6 +2,64 @@
 
 This project is a RESTful API for managing burger orders, built with **Spring Boot**.
 
+## 🐳 Infrastructure (Docker Setup)
+
+Before running the application, you need to start the required infrastructure. Run the following commands to set up the environment:
+
+1. Elasticsearch & Kibana (Logging & UI)
+
+```bash
+# Run Elasticsearch
+docker run -d \
+  --name elasticsearch_dev \
+  -p 9200:9200 \
+  -p 9300:9300 \
+  -e "discovery.type=single-node" \
+  -e "xpack.security.enabled=true" \
+  -e "xpack.security.http.ssl.enabled=false" \
+  -e "ELASTIC_PASSWORD=password" \
+  -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
+  docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+
+# Reset password for Kibana system user (wait ~20s for Elasticsearch to start first)
+docker exec -it elasticsearch_dev bin/elasticsearch-reset-password -u kibana_system --batch --force -is "password"
+
+# Run Kibana
+docker run -d \
+  --name kibana_dev \
+  -p 5601:5601 \
+  --link elasticsearch_dev:elasticsearch \
+  -e "ELASTICSEARCH_HOSTS=http://elasticsearch:9200" \
+  -e "ELASTICSEARCH_USERNAME=kibana_system" \
+  -e "ELASTICSEARCH_PASSWORD=password" \
+  docker.elastic.co/kibana/kibana:8.12.0
+```
+
+2. RabbitMQ (Message Broker)
+
+```bash
+docker run -d \
+  --name rabbitmq_dev \
+  -p 5672:5672 \
+  -p 15672:15672 \
+  -e RABBITMQ_DEFAULT_USER=admin \
+  -e RABBITMQ_DEFAULT_PASS=password \
+  rabbitmq:3.12-management
+```
+
+3. PostgreSQL (Main Database)
+
+```bash
+docker run -d \
+  --name postgres_dev \
+  -p 5432:5432 \
+  -e POSTGRES_USER=admin \
+  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_DB=burger_order_api_db \
+  -v postgres_dev_data:/var/lib/postgresql \
+  postgres:latest
+```
+
 ## 🛠️ Quick Start
 
 1. **Clone the Repository:**
@@ -22,21 +80,6 @@ spring.datasource.password=password
 ```
 
 > Note: The application is configured to use the dev profile by default
-
-```bash
-  docker run -d \
-  --name postgres_example_db \
-  -p 5432:5432 \
-  -e POSTGRES_USER=admin \
-  -e POSTGRES_PASSWORD=password \
-  -e POSTGRES_DB=example_db \
-  -v postgres_dev_data:/var/lib/postgresql \
-  postgres:latest
-
-  docker exec -it postgres_example_db psql -U admin -d example_db
-
-  \x auto
-```
 
 3. **Run Tests:**
 

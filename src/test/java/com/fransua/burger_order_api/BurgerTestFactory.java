@@ -1,4 +1,4 @@
-package com.fransua.burger_order_api.factory;
+package com.fransua.burger_order_api;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 

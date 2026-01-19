@@ -1,11 +1,10 @@
-package com.fransua.burger_order_api.controller;
+package com.fransua.burger_order_api;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import com.fransua.burger_order_api.burger.BurgerRepository;
 import com.fransua.burger_order_api.burger.dto.request.BurgerRequest;
 import com.fransua.burger_order_api.burger.dto.response.BurgerResponse;
-import com.fransua.burger_order_api.factory.BurgerTestFactory;
 import com.fransua.burger_order_api.order.OrderRepository;
 import java.math.BigDecimal;
 import java.util.List;
