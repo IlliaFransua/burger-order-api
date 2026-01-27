@@ -93,3 +93,4 @@ nb-configuration.xml
 ## Custom
 ##############################
 application-local.properties
+.env

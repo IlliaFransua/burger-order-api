@@ -1,0 +1,15 @@
+meta {
+  name: find all burgers
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:8080/api/burger
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}
