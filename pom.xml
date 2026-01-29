@@ -39,12 +39,6 @@
       <artifactId>spring-data-elasticsearch</artifactId>
     </dependency>
     <dependency>
-      <groupId>me.paulschwarz</groupId>
-      <artifactId>springboot3-dotenv</artifactId>
-      <version>5.1.0</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-mail</artifactId>
       <version>4.0.1</version>
@@ -121,6 +115,23 @@
   </dependencies>
   <build>
     <plugins>
+      <plugin>
+        <groupId>com.google.cloud.tools</groupId>
+        <artifactId>jib-maven-plugin</artifactId>
+        <version>3.5.1</version>
+        <configuration>
+          <from>
+            <image>eclipse-temurin@sha256:326837fba06a8ff5482a17bafbd65319e64a6e997febb7c85ebe7e3f73c12b11</image>
+          </from>
+          <to>
+            <image>europe-west6-docker.pkg.dev/burger-order-485523/docker-repo/burger-order-api:${project.version}</image>
+            <credHelper>gcloud</credHelper>
+          </to>
+          <container>
+            <mainClass>com.fransua.burger_order_api.BurgerOrderApiApplication</mainClass>
+          </container>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>

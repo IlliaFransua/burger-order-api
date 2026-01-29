@@ -15,7 +15,7 @@ public class EmailRetrySheduler {
   private final EmailMessageRepository emailMessageRepository;
   private final EmailSenderService emailSenderService;
 
-  @Scheduled(fixedDelay = 30_000) // 5 min
+  @Scheduled(fixedDelayString = "${EMAIL_RETRY_DELAY}") // 5 min
   public void retryFailedEmails() {
     log.info("Starting background retry send for failed emails...");
 

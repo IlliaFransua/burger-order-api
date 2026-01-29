@@ -53,7 +53,7 @@ public class OrderService {
       BurgerRepository burgerRepository,
       OrderMapper orderMapper,
       RabbitTemplate rabbitTemplate,
-      @Value("${app.mail.report-to}") String orderReportEmailRecipient) {
+      @Value("${ORDER_REPORT_EMAIL_RECIPIENT}") String orderReportEmailRecipient) {
     this.orderReader = orderReader;
     this.orderRepository = orderRepository;
     this.burgerRepository = burgerRepository;

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface EmailMessageRepository extends ElasticsearchRepository<EmailMessage, String> {
+
   List<EmailMessage> findByStatusAndAttemptsCountLessThan(
       EmailMessage.MessageStatus status, int maxAttempts);
 }

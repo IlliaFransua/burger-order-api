@@ -20,6 +20,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Document(indexName = "emails")
 public class EmailMessage {
+
   @Id @EqualsAndHashCode.Include private String id;
 
   @Field(type = FieldType.Keyword)
