@@ -10,7 +10,7 @@
   </parent>
   <groupId>com.fransua</groupId>
   <artifactId>burger-order-api</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.2-SNAPSHOT</version>
   <name>burger-order-api</name>
   <description>BurgerOrderAPI project</description>
   <url></url>
